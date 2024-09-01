@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
+    "test:dev": "playwright test --project chromium",
     "test:report": "playwright show-report"
   },
   "keywords": [],
