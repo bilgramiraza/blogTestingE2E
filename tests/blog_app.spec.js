@@ -132,12 +132,16 @@ describe('Blog App', () => {
       await expect(firstBlog).toHaveCount(0);
     })
     test('The blog delete Button is only Visible to its author', async ({ page }) => {
+      const firstBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'First Blog' });
       const secondBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'Second Blog' });
-      const deleteButton = secondBlog.getByTestId('blogDelete');
 
       await secondBlog.getByRole('button', { name: 'show' }).click();
 
-      await expect(deleteButton).not.toBeVisible();
+      await expect(secondBlog.getByTestId('blogDelete')).not.toBeVisible();
+
+      await firstBlog.getByRole('button', { name: 'show' }).click();
+
+      await expect(firstBlog.getByTestId('blogDelete')).toBeVisible();
     })
   })
 });
