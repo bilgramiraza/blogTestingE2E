@@ -1,5 +1,5 @@
 const { test, describe, beforeEach, expect } = require("@playwright/test");
-const { loginWith, createBlog } = require("./helper");
+const { loginWith, createBlog, logout } = require("./helper");
 const exp = require("constants");
 
 describe('Blog App', () => {
@@ -10,6 +10,13 @@ describe('Blog App', () => {
         username: 'test',
         name: 'tester',
         password: 'secret',
+      }
+    });
+    await request.post('/api/users', {
+      data: {
+        username: 'test2',
+        name: 'testino',
+        password: 'secre',
       }
     });
     await page.goto('/');
@@ -67,18 +74,30 @@ describe('Blog App', () => {
     })
   })
   describe('Blog Interactions', async () => {
-    beforeEach(async ({ page }) => {
-      await loginWith(page, 'test', 'secret');
-      await createBlog(page, 'First Blog', 'tester', 'tester.com');
+    beforeEach(async ({ page }, testInfo) => {
+      testInfo.setTimeout(20000);
 
-      await page.getByRole('button', { name: 'show' }).click();
+      await loginWith(page, 'test', 'secret');
+      await page.getByTestId('notification').getByText('tester has Logged In').waitFor();
+      await createBlog(page, 'First Blog', 'tester', 'tester.com');
+      logout(page);
+
+      await loginWith(page, 'test2', 'secre');
+      await page.getByTestId('notification').getByText('testino has Logged In').waitFor();
+      await createBlog(page, 'Second Blog', 'testino', 'testing.com');
+      logout(page);
+
+      await loginWith(page, 'test', 'secret');
     })
     test('A blog can be liked', async ({ page }) => {
       const notificationDiv = page.getByTestId('notification');
-      const blogUrl = page.getByTestId('blogUrl');
-      const blogUser = page.getByTestId('blogUser');
-      const likeButton = page.getByTestId('blogLike');
-      const deleteButton = page.getByTestId('blogDelete');
+      const firstBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'First Blog' });
+      const blogUrl = firstBlog.getByTestId('blogUrl');
+      const blogUser = firstBlog.getByTestId('blogUser');
+      const likeButton = firstBlog.getByTestId('blogLike');
+      const deleteButton = firstBlog.getByTestId('blogDelete');
+
+      await firstBlog.getByRole('button', { name: 'show' }).click();
 
       await expect(blogUrl).toBeVisible();
       await expect(blogUrl).toHaveText('tester.com');
@@ -99,8 +118,10 @@ describe('Blog App', () => {
     })
     test('A blog can be deleted', async ({ page }) => {
       const notificationDiv = page.getByTestId('notification');
-      const blogListDiv = page.getByTestId('bloglist');
-      const deleteButton = page.getByTestId('blogDelete');
+      const firstBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'First Blog' });
+      const deleteButton = firstBlog.getByTestId('blogDelete');
+
+      await firstBlog.getByRole('button', { name: 'show' }).click();
 
       page.on('dialog', dialog => dialog.accept());
       await deleteButton.click();
@@ -108,7 +129,15 @@ describe('Blog App', () => {
       await expect(notificationDiv.getByText('Blog(First Blog By tester) Deleted Successfully')).toBeVisible();
       await expect(notificationDiv.getByText('Blog(First Blog By tester) Deleted Successfully')).toHaveCSS('border-color', 'rgb(0, 128, 0)');
 
-      await expect(blogListDiv).not.toBeVisible();
+      await expect(firstBlog).toHaveCount(0);
+    })
+    test('The blog delete Button is only Visible to its author', async ({ page }) => {
+      const secondBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'Second Blog' });
+      const deleteButton = secondBlog.getByTestId('blogDelete');
+
+      await secondBlog.getByRole('button', { name: 'show' }).click();
+
+      await expect(deleteButton).not.toBeVisible();
     })
   })
 });

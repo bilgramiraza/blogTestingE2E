@@ -18,7 +18,13 @@ const createBlog = async (page, title, author, url) => {
   await page.getByTestId('notification').getByText(`Blog(${title}) Created Successfully`).waitFor();
 };
 
+const logout = async (page) => {
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByTestId('notification').getByText('Log out Successful').waitFor();
+};
+
 export {
   loginWith,
   createBlog,
+  logout
 };
