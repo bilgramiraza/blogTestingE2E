@@ -143,5 +143,24 @@ describe('Blog App', () => {
 
       await expect(firstBlog.getByTestId('blogDelete')).toBeVisible();
     })
+    test('The blogs sort as per their likes', async ({ page }) => {
+      const firstBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'First Blog' });
+      const secondBlog = page.getByTestId('bloglist').locator('div').filter({ hasText: 'Second Blog' });
+
+      await firstBlog.getByRole('button', { name: 'show' }).click();
+      await firstBlog.getByTestId('blogLike').click();
+      await firstBlog.getByText('1').waitFor();
+      await firstBlog.getByRole('button', { name: 'hide' }).click();
+
+      await secondBlog.getByRole('button', { name: 'show' }).click();
+      await secondBlog.getByTestId('blogLike').click();
+      await secondBlog.getByText('1').waitFor();
+      await secondBlog.getByTestId('blogLike').click();
+      await secondBlog.getByText('2').waitFor();
+      await secondBlog.getByRole('button', { name: 'hide' }).click();
+
+      await expect(page.getByTestId('bloglist').first()).toContainText('Second Blog');
+      await expect(page.getByTestId('bloglist').last()).toContainText('First Blog');
+    })
   })
 });
