@@ -70,6 +70,8 @@ describe('Blog App', () => {
     beforeEach(async ({ page }) => {
       await loginWith(page, 'test', 'secret');
       await createBlog(page, 'First Blog', 'tester', 'tester.com');
+
+      await page.getByRole('button', { name: 'show' }).click();
     })
     test('A blog can be liked', async ({ page }) => {
       const notificationDiv = page.getByTestId('notification');
@@ -77,8 +79,6 @@ describe('Blog App', () => {
       const blogUser = page.getByTestId('blogUser');
       const likeButton = page.getByTestId('blogLike');
       const deleteButton = page.getByTestId('blogDelete');
-
-      await page.getByRole('button', { name: 'show' }).click();
 
       await expect(blogUrl).toBeVisible();
       await expect(blogUrl).toHaveText('tester.com');
@@ -96,6 +96,19 @@ describe('Blog App', () => {
       await expect(likeButton).toHaveText('1');
       await expect(notificationDiv.getByText('Blog(First Blog) Liked Successfully')).toBeVisible();
       await expect(notificationDiv.getByText('Blog(First Blog) Liked Successfully')).toHaveCSS('border-color', 'rgb(0, 128, 0)');
+    })
+    test('A blog can be deleted', async ({ page }) => {
+      const notificationDiv = page.getByTestId('notification');
+      const blogListDiv = page.getByTestId('bloglist');
+      const deleteButton = page.getByTestId('blogDelete');
+
+      page.on('dialog', dialog => dialog.accept());
+      await deleteButton.click();
+
+      await expect(notificationDiv.getByText('Blog(First Blog By tester) Deleted Successfully')).toBeVisible();
+      await expect(notificationDiv.getByText('Blog(First Blog By tester) Deleted Successfully')).toHaveCSS('border-color', 'rgb(0, 128, 0)');
+
+      await expect(blogListDiv).not.toBeVisible();
     })
   })
 });
