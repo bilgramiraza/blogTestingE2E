@@ -15,6 +15,7 @@ const createBlog = async (page, title, author, url) => {
   await page.getByTestId('url').fill(url);
 
   await page.getByTestId('create').click();
+  await page.getByTestId('notification').getByText(`Blog(${title}) Created Successfully`).waitFor();
 };
 
 export {

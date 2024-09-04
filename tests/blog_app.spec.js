@@ -1,5 +1,6 @@
 const { test, describe, beforeEach, expect } = require("@playwright/test");
 const { loginWith, createBlog } = require("./helper");
+const exp = require("constants");
 
 describe('Blog App', () => {
   beforeEach(async ({ page, request }) => {
@@ -34,7 +35,6 @@ describe('Blog App', () => {
   describe('Login', async () => {
     test('Succeeds with valid Credentials', async ({ page }) => {
       const notificationDiv = page.getByTestId('notification');
-
       await loginWith(page, 'test', 'secret');
 
       await expect(notificationDiv.getByText('tester has Logged In')).toBeVisible();
@@ -64,6 +64,38 @@ describe('Blog App', () => {
 
       await expect(blogListDiv.getByText('First Blog')).toBeVisible();
       await expect(blogListDiv).toHaveCount(1);
+    })
+  })
+  describe('Blog Interactions', async () => {
+    beforeEach(async ({ page }) => {
+      await loginWith(page, 'test', 'secret');
+      await createBlog(page, 'First Blog', 'tester', 'tester.com');
+    })
+    test('A blog can be liked', async ({ page }) => {
+      const notificationDiv = page.getByTestId('notification');
+      const blogUrl = page.getByTestId('blogUrl');
+      const blogUser = page.getByTestId('blogUser');
+      const likeButton = page.getByTestId('blogLike');
+      const deleteButton = page.getByTestId('blogDelete');
+
+      await page.getByRole('button', { name: 'show' }).click();
+
+      await expect(blogUrl).toBeVisible();
+      await expect(blogUrl).toHaveText('tester.com');
+
+      await expect(likeButton).toBeVisible();
+      await expect(likeButton).toHaveText('0');
+
+      await expect(blogUser).toBeVisible();
+      await expect(blogUser).toHaveText('test');
+
+      await expect(deleteButton).toBeVisible();
+
+      await likeButton.click();
+
+      await expect(likeButton).toHaveText('1');
+      await expect(notificationDiv.getByText('Blog(First Blog) Liked Successfully')).toBeVisible();
+      await expect(notificationDiv.getByText('Blog(First Blog) Liked Successfully')).toHaveCSS('border-color', 'rgb(0, 128, 0)');
     })
   })
 });
